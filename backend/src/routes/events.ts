@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import pool from '../db/connection';
 
 const router = Router();
@@ -24,7 +24,7 @@ router.post('/', async (req: Request, res: Response) => {
     return;
   }
   const now = new Date().toISOString();
-  const id = uuidv4();
+  const id = randomUUID();
   const result = await pool.query(
     `INSERT INTO events (id, year, month, day, title, memo, color, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
