@@ -1,18 +1,25 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
+import { Pool } from 'pg';
 
-const dbPath = process.env.DB_PATH || path.join(__dirname, '../../data/yearcal.db');
-const dataDir = path.dirname(dbPath);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+});
 
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+export async function initDB(): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS events (
+      id TEXT PRIMARY KEY,
+      year INTEGER NOT NULL,
+      month INTEGER NOT NULL,
+      day INTEGER,
+      title TEXT NOT NULL,
+      memo TEXT,
+      color TEXT NOT NULL DEFAULT '#4CAF50',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_events_year ON events(year);
+  `);
 }
 
-const db = new Database(dbPath);
-db.pragma('journal_mode = WAL');
-
-const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf-8');
-db.exec(schema);
-
-export default db;
+export default pool;
